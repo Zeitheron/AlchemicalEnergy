@@ -1,0 +1,10 @@
+{
+  "parent": "alcheng:block/machine",
+  "textures": {
+    "top": "alcheng:blocks/alchemical_condenser/off/top",
+    "front": "alcheng:blocks/alchemical_condenser/off/front",
+    "side": "alcheng:blocks/alchemical_condenser/off/side",
+    "back": "alcheng:blocks/alchemical_condenser/off/back",
+    "bottom": "alcheng:blocks/alchemical_condenser/off/bottom"
+  }
+}

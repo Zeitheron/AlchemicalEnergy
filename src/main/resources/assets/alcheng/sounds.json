@@ -1,0 +1,14 @@
+{
+  "machines.alchemical_condenser": {
+    "sounds": [
+      "alcheng:machines/alchemical_condenser"
+    ],
+    "subtitle": "subtitles.alcheng:machines.alchemical_condenser"
+  },
+  "machines.alchemical_crafter": {
+    "sounds": [
+      "alcheng:machines/alchemical_crafter"
+    ],
+    "subtitle": "subtitles.alcheng:machines.alchemical_crafter"
+  }
+}

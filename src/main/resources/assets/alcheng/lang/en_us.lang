@@ -1,0 +1,7 @@
+
+fluid.alcheng:alchemical_energy=Alchemical Energy
+
+tile.alcheng:alchemical_condenser.name=Alchemical Energy Condenser
+
+subtitles.alcheng:machines.alchemical_condenser=Condenser Working
+subtitles.alcheng:machines.alchemical_crafter=Crafter Working

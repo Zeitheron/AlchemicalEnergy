@@ -1,0 +1,12 @@
+[
+  {
+    "modid": "alcheng",
+    "name": "Alchemical Energy",
+    "description": "",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "authorList": [
+      "Zeitheron"
+    ]
+  }
+]
