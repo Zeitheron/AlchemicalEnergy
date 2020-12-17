@@ -3,6 +3,7 @@ package org.zeith.comm3.alcheng.utils;
 import com.zeitheron.hammercore.utils.energy.BigEnergyStorage;
 import com.zeitheron.hammercore.utils.math.BigMath;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class BigFEEnergyStorage
@@ -42,5 +43,10 @@ public class BigFEEnergyStorage
 	public boolean hasEnergy(Number fe)
 	{
 		return BigMath.isAGreaterThenB(energy, BigInteger.valueOf(fe.longValue()), false);
+	}
+
+	public double getFilledProgress()
+	{
+		return new BigDecimal(energy).divide(new BigDecimal(capacity)).doubleValue();
 	}
 }

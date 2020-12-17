@@ -25,6 +25,7 @@ import org.zeith.comm3.alcheng.init.BlocksAE;
 import org.zeith.comm3.alcheng.init.FluidsAE;
 import org.zeith.comm3.alcheng.init.RegistriesAE;
 import org.zeith.comm3.alcheng.init.SoundsAE;
+import org.zeith.comm3.alcheng.inventory.AlchemicalCondenser;
 import org.zeith.comm3.alcheng.net.PacketPlayMachineSound;
 import org.zeith.comm3.alcheng.recipes.types.RecipeAlchemicalCondenser;
 import org.zeith.comm3.alcheng.utils.BigFEEnergyStorage;
@@ -59,48 +60,59 @@ public class TileAlchemicalCondenser
 	@Override
 	public void tick()
 	{
-		if(FEAP == null) FEAP = FluidEnergyAccessPoint.create(world, pos);
-		if(fluid.getFluidAmount() > 0) fluid.drain(FEAP.emitFluid(fluid.getFluid()), true);
-
-		if(!world.isRemote && onHold.get().isEmpty())
-			if(!items.getStackInSlot(0).isEmpty())
-			{
-				if(atTickRate(30))
-					RegistriesAE.ALCHEMICAL_CONDENSER_RECIPES
-							.getRecipes()
-							.stream()
-							.filter(this::canCraft)
-							.findFirst()
-							.ifPresent(this::setRecipe);
-			} else
-			{
-				setRecipe(null);
-			}
-
-		boolean active = recipe != null;
-
-		if(active)
+		if(world.isRemote && atTickRate(5))
 		{
-			if(energy.hasEnergy(recipe.energyRate) && fulfulledTicks.get() < recipe.processTicks)
-			{
-				energy.extractEnergy(recipe.energyRate, false);
-				fulfulledTicks.set(fulfulledTicks.get() + 1);
-			}
-
-			if(fulfulledTicks.get() >= recipe.processTicks)
-			{
-				int canFit = fluid.getCapacity() - fluid.getFluidAmount();
-				if(canFit >= recipe.outputMb)
-				{
-					fluid.fill(new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, recipe.outputMb), true);
-					fulfulledTicks.set(0);
-					onHold.set(ItemStack.EMPTY);
-				}
-			}
+			if(recipeId.get().isEmpty())
+				this.recipe = null;
+			else
+				this.recipe = RegistriesAE.ALCHEMICAL_CONDENSER_RECIPES.getRecipe(new ResourceLocation(recipeId.get()));
 		}
 
 		if(!world.isRemote)
 		{
+			if(FEAP == null) FEAP = FluidEnergyAccessPoint.create(world, pos);
+			if(fluid.getFluidAmount() > 0) fluid.drain(FEAP.emitFluid(fluid.getFluid()), true);
+
+			if(atTickRate(4))
+				sendChangesToNearby();
+
+			if(onHold.get().isEmpty())
+				if(!items.getStackInSlot(0).isEmpty())
+				{
+					if(atTickRate(30))
+						RegistriesAE.ALCHEMICAL_CONDENSER_RECIPES
+								.getRecipes()
+								.stream()
+								.filter(this::canCraft)
+								.findFirst()
+								.ifPresent(this::setRecipe);
+				} else
+				{
+					setRecipe(null);
+				}
+
+			boolean active = recipe != null;
+
+			if(active)
+			{
+				if(energy.hasEnergy(recipe.energyRate) && fulfulledTicks.get() < recipe.processTicks)
+				{
+					energy.extractEnergy(recipe.energyRate, false);
+					fulfulledTicks.set(fulfulledTicks.get() + 1);
+				}
+
+				if(fulfulledTicks.get() >= recipe.processTicks)
+				{
+					int canFit = fluid.getCapacity() - fluid.getFluidAmount();
+					if(canFit >= recipe.outputMb)
+					{
+						fluid.fill(new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, recipe.outputMb), true);
+						fulfulledTicks.set(0);
+						onHold.set(ItemStack.EMPTY);
+					}
+				}
+			}
+
 			boolean update;
 			IBlockState state = world.getBlockState(pos);
 			if(update = (state.getBlock() == BlocksAE.ALCHEMICAL_CONDENSER && state.getValue(IBlockEnableable.ENABLED).booleanValue() != active))
@@ -108,6 +120,12 @@ public class TileAlchemicalCondenser
 			if(active && (update || atTickRate(30)))
 				PacketPlayMachineSound.ensureStarted(world, pos, SoundsAE.MACHINES_ALCHEMICAL_CONDENSER, 1F, 1F);
 		}
+	}
+
+	@Override
+	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newSate)
+	{
+		return oldState.getBlock() != newSate.getBlock();
 	}
 
 	@Override
@@ -145,6 +163,24 @@ public class TileAlchemicalCondenser
 	public void createDrop(EntityPlayer player, World world, BlockPos pos)
 	{
 		InventoryHelper.dropInventoryItems(world, pos, items);
+	}
+
+	@Override
+	public boolean hasGui()
+	{
+		return true;
+	}
+
+	@Override
+	public Object getClientGuiElement(EntityPlayer player)
+	{
+		return AlchemicalCondenser.createGUI(this, player);
+	}
+
+	@Override
+	public Object getServerGuiElement(EntityPlayer player)
+	{
+		return AlchemicalCondenser.createContainer(this, player);
 	}
 
 	@Override
@@ -294,5 +330,12 @@ public class TileAlchemicalCondenser
 	public boolean hasCustomName()
 	{
 		return false;
+	}
+
+	public float getProgress(float partialTicks)
+	{
+		if(recipe != null)
+			return Math.min(1F, (fulfulledTicks.get() + partialTicks) / (float) recipe.processTicks);
+		return 0F;
 	}
 }
