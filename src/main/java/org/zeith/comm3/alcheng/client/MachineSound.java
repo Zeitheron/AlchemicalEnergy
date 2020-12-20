@@ -59,7 +59,7 @@ public class MachineSound
 			if(!on)
 			{
 				volume = MathHelper.approachLinear(volume / masterVol, 0, 0.035F) * masterVol;
-				if(volume <= 0F) stop();
+				if(volume <= 0.0001F) stop();
 			} else
 			{
 				volume = MathHelper.approachLinear(volume / masterVol, 1, 0.02F) * masterVol;

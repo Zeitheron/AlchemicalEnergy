@@ -6,35 +6,35 @@ import com.zeitheron.hammercore.utils.math.BigMath;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class BigFEEnergyStorage
+public class DynamicBigEnergyStorage
 		extends BigEnergyStorage
 {
-	public BigFEEnergyStorage(Number capacity)
+	public DynamicBigEnergyStorage(Number capacity)
 	{
 		super(BigInteger.valueOf(capacity.longValue()));
 	}
 
-	public BigFEEnergyStorage(BigInteger capacity)
+	public DynamicBigEnergyStorage(BigInteger capacity)
 	{
 		super(capacity);
 	}
 
-	public BigFEEnergyStorage(BigInteger capacity, BigInteger maxTransfer)
+	public DynamicBigEnergyStorage(BigInteger capacity, BigInteger maxTransfer)
 	{
 		super(capacity, maxTransfer);
 	}
 
-	public BigFEEnergyStorage(BigInteger capacity, BigInteger maxReceive, BigInteger maxExtract)
+	public DynamicBigEnergyStorage(BigInteger capacity, BigInteger maxReceive, BigInteger maxExtract)
 	{
 		super(capacity, maxReceive, maxExtract);
 	}
 
-	public BigFEEnergyStorage(BigInteger capacity, BigInteger maxReceive, BigInteger maxExtract, BigInteger energy)
+	public DynamicBigEnergyStorage(BigInteger capacity, BigInteger maxReceive, BigInteger maxExtract, BigInteger energy)
 	{
 		super(capacity, maxReceive, maxExtract, energy);
 	}
 
-	public BigFEEnergyStorage setFECapacity(BigInteger capacity)
+	public DynamicBigEnergyStorage setFECapacity(BigInteger capacity)
 	{
 		this.capacity = capacity;
 		return this;

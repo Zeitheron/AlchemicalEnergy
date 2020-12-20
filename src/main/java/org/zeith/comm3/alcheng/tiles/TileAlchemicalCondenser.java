@@ -9,6 +9,7 @@ import com.zeitheron.hammercore.utils.FluidEnergyAccessPoint;
 import com.zeitheron.hammercore.utils.inventory.InventoryDummy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
@@ -21,6 +22,11 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
+import org.zeith.comm3.alcheng.api.machines.IMachineTile;
+import org.zeith.comm3.alcheng.api.machines.upgrades.IMachineUpgrades;
+import org.zeith.comm3.alcheng.api.machines.upgrades.IUpgradeItem;
+import org.zeith.comm3.alcheng.api.machines.upgrades.MachineUpgradeManager;
+import org.zeith.comm3.alcheng.api.machines.upgrades.UpgradablePart;
 import org.zeith.comm3.alcheng.init.BlocksAE;
 import org.zeith.comm3.alcheng.init.FluidsAE;
 import org.zeith.comm3.alcheng.init.RegistriesAE;
@@ -28,16 +34,19 @@ import org.zeith.comm3.alcheng.init.SoundsAE;
 import org.zeith.comm3.alcheng.inventory.AlchemicalCondenser;
 import org.zeith.comm3.alcheng.net.PacketPlayMachineSound;
 import org.zeith.comm3.alcheng.recipes.types.RecipeAlchemicalCondenser;
-import org.zeith.comm3.alcheng.utils.BigFEEnergyStorage;
+import org.zeith.comm3.alcheng.utils.DynamicBigEnergyStorage;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 
 public class TileAlchemicalCondenser
 		extends TileSyncableTickable
-		implements ISidedInventory, ITileDroppable
+		implements ISidedInventory, ITileDroppable, IMachineTile
 {
 	public final InventoryDummy items = new InventoryDummy(1);
-	public final BigFEEnergyStorage energy = new BigFEEnergyStorage(5000);
+	public final InventoryDummy upgrades = new InventoryDummy(5);
+	public final DynamicBigEnergyStorage energy = new DynamicBigEnergyStorage(5000);
 	public final FluidTank fluid = new FluidTank(16000);
 	public RecipeAlchemicalCondenser recipe;
 
@@ -46,6 +55,11 @@ public class TileAlchemicalCondenser
 	public final NetPropertyNumber<Integer> fulfulledTicks;
 	public final NetPropertyBool autoExtract;
 	public final NetPropertyItemStack onHold;
+	public final NetPropertyNumber<Float> speedMult;
+	public final NetPropertyNumber<Integer> fluidBuffer;
+	public final NetPropertyNumber<Float> progressF;
+
+	private float prevProgressF_cl;
 
 	public TileAlchemicalCondenser()
 	{
@@ -53,20 +67,40 @@ public class TileAlchemicalCondenser
 		this.fulfulledTicks = new NetPropertyNumber<>(this, 0);
 		this.autoExtract = new NetPropertyBool(this, false);
 		this.onHold = new NetPropertyItemStack(this, ItemStack.EMPTY);
+		this.speedMult = new NetPropertyNumber<>(this, 1F);
+		this.fluidBuffer = new NetPropertyNumber<>(this, 16000);
+		this.progressF = new NetPropertyNumber<>(this, 0F);
+
+		this.upgrades.validSlots = (slot, stack) ->
+		{
+			UpgradablePart p = IUpgradeItem.fromStack(stack);
+			return p != null && upgrades().hasUpgrade(p) && countUpgrades(p) < p.getMax();
+		};
 	}
 
 	FluidEnergyAccessPoint FEAP;
 
 	@Override
+	public void tickPrevValues()
+	{
+		prevProgressF_cl = progressF.get();
+	}
+
+	@Override
 	public void tick()
 	{
-		if(world.isRemote && atTickRate(5))
+		if(world.isRemote)
 		{
-			if(recipeId.get().isEmpty())
-				this.recipe = null;
-			else
-				this.recipe = RegistriesAE.ALCHEMICAL_CONDENSER_RECIPES.getRecipe(new ResourceLocation(recipeId.get()));
+			if(atTickRate(5))
+			{
+				if(recipeId.get().isEmpty())
+					this.recipe = null;
+				else
+					this.recipe = RegistriesAE.ALCHEMICAL_CONDENSER_RECIPES.getRecipe(new ResourceLocation(recipeId.get()));
+			}
 		}
+
+		fluid.setCapacity(fluidBuffer.get());
 
 		if(!world.isRemote)
 		{
@@ -74,7 +108,10 @@ public class TileAlchemicalCondenser
 			if(fluid.getFluidAmount() > 0) fluid.drain(FEAP.emitFluid(fluid.getFluid()), true);
 
 			if(atTickRate(4))
+			{
+				handleUpgrades();
 				sendChangesToNearby();
+			}
 
 			if(onHold.get().isEmpty())
 				if(!items.getStackInSlot(0).isEmpty())
@@ -95,13 +132,17 @@ public class TileAlchemicalCondenser
 
 			if(active)
 			{
-				if(energy.hasEnergy(recipe.energyRate) && fulfulledTicks.get() < recipe.processTicks)
+				float maxTicks = recipe.processTicks;
+
+				if(energy.hasEnergy(recipe.energyRate) && fulfulledTicks.get() < maxTicks)
 				{
 					energy.extractEnergy(recipe.energyRate, false);
 					fulfulledTicks.set(fulfulledTicks.get() + 1);
 				}
 
-				if(fulfulledTicks.get() >= recipe.processTicks)
+				progressF.set(fulfulledTicks.get() / maxTicks);
+
+				if(fulfulledTicks.get() >= maxTicks)
 				{
 					int canFit = fluid.getCapacity() - fluid.getFluidAmount();
 					if(canFit >= recipe.outputMb)
@@ -202,14 +243,18 @@ public class TileAlchemicalCondenser
 		energy.writeToNBT(nbt);
 		nbt.setTag("Fluids", fluid.writeToNBT(new NBTTagCompound()));
 		nbt.setTag("Items", items.writeToNBT(new NBTTagCompound()));
+		nbt.setTag("Upgrades", upgrades.writeToNBT(new NBTTagCompound()));
 	}
 
 	@Override
 	public void readNBT(NBTTagCompound nbt)
 	{
+		if(world == null)
+			fluid.setCapacity(1600000);
 		energy.readFromNBT(nbt);
 		fluid.readFromNBT(nbt.getCompoundTag("Fluids"));
 		items.readFromNBT(nbt.getCompoundTag("Items"));
+		upgrades.readFromNBT(nbt.getCompoundTag("Upgrades"));
 	}
 
 	@Override
@@ -337,5 +382,40 @@ public class TileAlchemicalCondenser
 		if(recipe != null)
 			return Math.min(1F, (fulfulledTicks.get() + partialTicks) / (float) recipe.processTicks);
 		return 0F;
+	}
+
+	private static final List<UpgradablePart> VALID_PARTS = Arrays.asList(UpgradablePart.SPEED, UpgradablePart.ENERGY, UpgradablePart.ALCHEMICAL_BUFFER, UpgradablePart.RF_BUFFER, UpgradablePart.STACK);
+	public final IMachineUpgrades MUM = new MachineUpgradeManager(VALID_PARTS::contains);
+
+	@Override
+	public void handleUpgrades()
+	{
+		MUM.resetUpgrades();
+
+		for(UpgradablePart part : VALID_PARTS)
+		{
+			MUM.upgradePart(part, part.computeUpgradability(this));
+		}
+
+		float speed = MUM.getUpgrade(UpgradablePart.SPEED);
+		if(speed > 12F) speedMult.set(-1F);
+		else speedMult.set(1F + 1.25F * countUpgrades(UpgradablePart.SPEED));
+
+		int buf = 16000 + Math.round(MUM.getUpgrade(UpgradablePart.ALCHEMICAL_BUFFER) * 8000F);
+		fluidBuffer.set(buf);
+
+		MUM.getUpgrade(UpgradablePart.ENERGY);
+	}
+
+	@Override
+	public IMachineUpgrades upgrades()
+	{
+		return MUM;
+	}
+
+	@Override
+	public IInventory upgradeInventory()
+	{
+		return upgrades;
 	}
 }

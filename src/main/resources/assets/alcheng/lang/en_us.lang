@@ -5,5 +5,11 @@ fluid.alcheng:alchemical_energy=Alchemical Energy
 
 tile.alcheng:alchemical_condenser.name=Alchemical Energy Condenser
 
+item.alcheng:upgrades/alchemical_buffer.name=Alchemical Buffer Upgrade
+item.alcheng:upgrades/energy.name=Energy Upgrade
+item.alcheng:upgrades/rf_buffer.name=Energy Buffer Upgrade
+item.alcheng:upgrades/speed.name=Speed Upgrade
+item.alcheng:upgrades/stack.name=Stack Upgrade
+
 subtitles.alcheng:machines.alchemical_condenser=Condenser Working
 subtitles.alcheng:machines.alchemical_crafter=Crafter Working

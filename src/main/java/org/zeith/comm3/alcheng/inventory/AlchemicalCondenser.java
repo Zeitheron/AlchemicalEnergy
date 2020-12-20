@@ -7,15 +7,20 @@ import com.zeitheron.hammercore.client.gui.impl.container.SlotScaled;
 import com.zeitheron.hammercore.client.utils.RenderUtil;
 import com.zeitheron.hammercore.client.utils.UtilsFX;
 import net.minecraft.client.gui.inventory.GuiContainer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.zeith.comm3.alcheng.init.InfoAE;
 import org.zeith.comm3.alcheng.tiles.TileAlchemicalCondenser;
+
+import java.util.List;
 
 public class AlchemicalCondenser
 {
@@ -77,6 +82,39 @@ public class AlchemicalCondenser
 			if(tank.postRender(mouseX, mouseY))
 				drawHoveringText(tank.getTooltip(mouseX, mouseY), mouseX, mouseY);
 		}
+
+		@Override
+		protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY)
+		{
+			super.drawGuiContainerForegroundLayer(mouseX, mouseY);
+
+			InventoryPlayer inventoryplayer = this.mc.player.inventory;
+			ItemStack mouse = this.draggedStack.isEmpty() ? inventoryplayer.getItemStack() : this.draggedStack;
+
+			if(!mouse.isEmpty())
+			{
+				int color = tile.upgrades.isItemValidForSlot(0, mouse) ? 0x8044ff44 : 0x80ff4444;
+
+				List<Slot> sls = inventorySlots.inventorySlots;
+				for(int i = 1; i < 6; ++i)
+				{
+					Slot slot = sls.get(i);
+
+					GlStateManager.disableLighting();
+					GlStateManager.disableDepth();
+					int j1 = slot.xPos;
+					int k1 = slot.yPos;
+					GlStateManager.colorMask(true, true, true, false);
+					if(slot instanceof SlotScaled)
+						this.drawGradientRect(j1, k1, j1 + ((SlotScaled) slot).getWidth(), k1 + ((SlotScaled) slot).getHeight(), color, color);
+					else
+						this.drawGradientRect(j1, k1, j1 + 16, k1 + 16, color, color);
+					GlStateManager.colorMask(true, true, true, true);
+					GlStateManager.enableLighting();
+					GlStateManager.enableDepth();
+				}
+			}
+		}
 	}
 
 	static class Inventory
@@ -89,6 +127,8 @@ public class AlchemicalCondenser
 			this.tile = tile;
 
 			addSlotToContainer(new SlotScaled(tile.items, 0, 58, 31, 24, 24));
+			for(int i = 0; i < 5; ++i)
+				addSlotToContainer(new SlotScaled(tile.upgrades, i, 156, 11 + 14 * i, 12, 12));
 			addInventorySlots(player, 8, 84);
 		}
 
