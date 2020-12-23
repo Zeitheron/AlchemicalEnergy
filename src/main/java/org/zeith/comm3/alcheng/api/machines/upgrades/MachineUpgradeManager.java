@@ -1,13 +1,13 @@
 package org.zeith.comm3.alcheng.api.machines.upgrades;
 
-import it.unimi.dsi.fastutil.objects.Object2FloatArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 
 import java.util.function.Predicate;
 
 public class MachineUpgradeManager
 		implements IMachineUpgrades
 {
-	public final Object2FloatArrayMap<UpgradablePart> map = new Object2FloatArrayMap<>();
+	public final Object2IntArrayMap<UpgradablePart> map = new Object2IntArrayMap<>();
 
 	public final Predicate<UpgradablePart> hasUpgrade;
 
@@ -23,7 +23,7 @@ public class MachineUpgradeManager
 	}
 
 	@Override
-	public boolean upgradePart(UpgradablePart part, float by)
+	public boolean upgradePart(UpgradablePart part, int by)
 	{
 		if(hasUpgrade(part))
 		{
@@ -34,9 +34,9 @@ public class MachineUpgradeManager
 	}
 
 	@Override
-	public float getUpgrade(UpgradablePart part)
+	public int getUpgrade(UpgradablePart part)
 	{
-		return map.getFloat(part);
+		return map.getInt(part);
 	}
 
 	@Override

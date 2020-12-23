@@ -9,7 +9,7 @@ public class ItemsAE
 {
 	public static final ItemSimpleUpgrade UPGRADES_ALCHEMICAL_BUFFER = new ItemSimpleUpgrade(UpgradablePart.ALCHEMICAL_BUFFER);
 	public static final ItemSimpleUpgrade UPGRADES_ENERGY = new ItemSimpleUpgrade(UpgradablePart.ENERGY);
-	public static final ItemSimpleUpgrade UPGRADES_RF_BUFFER = new ItemSimpleUpgrade(UpgradablePart.RF_BUFFER);
+	public static final ItemSimpleUpgrade UPGRADES_FE_BUFFER = new ItemSimpleUpgrade(UpgradablePart.FE_BUFFER);
 	public static final ItemSimpleUpgrade UPGRADES_SPEED = new ItemSimpleUpgrade(UpgradablePart.SPEED);
 	public static final ItemSimpleUpgrade UPGRADES_STACK = new ItemSimpleUpgrade(UpgradablePart.STACK);
 

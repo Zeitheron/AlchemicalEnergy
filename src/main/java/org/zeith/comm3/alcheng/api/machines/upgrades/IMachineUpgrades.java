@@ -4,9 +4,9 @@ public interface IMachineUpgrades
 {
 	void resetUpgrades();
 
-	boolean upgradePart(UpgradablePart part, float by);
+	boolean upgradePart(UpgradablePart part, int by);
 
-	float getUpgrade(UpgradablePart part);
+	int getUpgrade(UpgradablePart part);
 
 	boolean hasUpgrade(UpgradablePart part);
 }

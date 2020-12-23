@@ -3,7 +3,6 @@ package org.zeith.comm3.alcheng.utils;
 import com.zeitheron.hammercore.utils.energy.BigEnergyStorage;
 import com.zeitheron.hammercore.utils.math.BigMath;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class DynamicBigEnergyStorage
@@ -37,6 +36,19 @@ public class DynamicBigEnergyStorage
 	public DynamicBigEnergyStorage setFECapacity(BigInteger capacity)
 	{
 		this.capacity = capacity;
+		this.energy = BigMath.min(this.energy, this.capacity);
+		return this;
+	}
+
+	public DynamicBigEnergyStorage setMaxReceive(BigInteger receive)
+	{
+		this.maxReceive = receive;
+		return this;
+	}
+
+	public DynamicBigEnergyStorage setMaxExtract(BigInteger extract)
+	{
+		this.maxExtract = extract;
 		return this;
 	}
 
@@ -47,6 +59,6 @@ public class DynamicBigEnergyStorage
 
 	public double getFilledProgress()
 	{
-		return new BigDecimal(energy).divide(new BigDecimal(capacity)).doubleValue();
+		return energy.multiply(BigInteger.valueOf(1000L)).divide(capacity).doubleValue() / 1000D;
 	}
 }

@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "alcheng:items/upgrades/rf_buffer"
+    "layer0": "alcheng:items/upgrades/fe_buffer"
   }
 }

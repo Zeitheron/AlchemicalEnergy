@@ -147,5 +147,11 @@ public class AlchemicalCondenser
 				for(int j = 0; j < 9; ++j)
 					addSlotToContainer(new Slot(player.inventory, 9 + j + i * 9, x + 18 * j, y + i * 18));
 		}
+
+		@Override
+		public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
+		{
+			return ItemStack.EMPTY;
+		}
 	}
 }
