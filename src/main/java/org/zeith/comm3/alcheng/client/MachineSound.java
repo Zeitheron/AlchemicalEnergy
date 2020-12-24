@@ -38,7 +38,7 @@ public class MachineSound
 	public static boolean isPlayingAt(BlockPos pos)
 	{
 		MachineSound s;
-		return PLAYING.containsKey(pos) && (s = PLAYING.get(pos)).volume > 0F && !s.donePlaying;
+		return PLAYING.containsKey(pos) && (s = PLAYING.get(pos)).volume > 0F && !s.donePlaying && Minecraft.getMinecraft().getSoundHandler().isSoundPlaying(s);
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.common.ForgeModContainer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
@@ -25,7 +26,7 @@ import org.zeith.comm3.alcheng.proxy.CommonProxyAE;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mod(modid = InfoAE.MOD_ID, version = "@VERSION@", name = "Alchemical Energy", certificateFingerprint = HammerCore.CERTIFICATE_FINGERPRINT, updateJSON = "http://dccg.herokuapp.com/api/fmluc/427755", dependencies = "required-after:hammercore")
+@Mod(modid = InfoAE.MOD_ID, version = "@VERSION@", name = InfoAE.MOD_NAME, certificateFingerprint = HammerCore.CERTIFICATE_FINGERPRINT, updateJSON = "http://dccg.herokuapp.com/api/fmluc/427755", dependencies = "required-after:hammercore")
 public class AlchemicalEnergyMod
 {
 	@SidedProxy(clientSide = "org.zeith.comm3.alcheng.proxy.ClientProxyAE", serverSide = "org.zeith.comm3.alcheng.proxy.CommonProxyAE")
@@ -91,6 +92,7 @@ public class AlchemicalEnergyMod
 		ItemsAE.register();
 		SoundsAE.register();
 
+		MinecraftForge.EVENT_BUS.register(proxy);
 		proxy.preInit();
 		compats.forEach(BaseCompatAE::preInit);
 	}

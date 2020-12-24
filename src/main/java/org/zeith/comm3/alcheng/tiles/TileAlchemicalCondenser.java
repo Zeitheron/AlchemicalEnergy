@@ -2,6 +2,7 @@ package org.zeith.comm3.alcheng.tiles;
 
 import com.zeitheron.hammercore.internal.blocks.base.BlockDeviceHC;
 import com.zeitheron.hammercore.internal.blocks.base.IBlockEnableable;
+import com.zeitheron.hammercore.internal.blocks.base.IBlockHorizontal;
 import com.zeitheron.hammercore.net.props.NetPropertyAbstract;
 import com.zeitheron.hammercore.net.props.NetPropertyBool;
 import com.zeitheron.hammercore.net.props.NetPropertyNumber;
@@ -28,6 +29,7 @@ import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import org.zeith.comm3.alcheng.api.machines.IAlchemicalSource;
 import org.zeith.comm3.alcheng.api.machines.IMachineTile;
 import org.zeith.comm3.alcheng.api.machines.upgrades.IMachineUpgrades;
 import org.zeith.comm3.alcheng.api.machines.upgrades.IUpgradeItem;
@@ -50,7 +52,7 @@ import java.util.List;
 
 public class TileAlchemicalCondenser
 		extends TileSyncableTickable
-		implements ISidedInventory, ITileDroppable, IMachineTile, IFluidHandler
+		implements ISidedInventory, ITileDroppable, IMachineTile, IFluidHandler, IAlchemicalSource
 {
 	public final InventoryDummy items = new InventoryDummy(1);
 	public final InventoryDummy upgrades = new InventoryDummy(5);
@@ -65,6 +67,8 @@ public class TileAlchemicalCondenser
 	public final NetPropertyNumber<Integer> fluidBuffer;
 	public final NetPropertyNumber<Long> feBuffer;
 	public final NetPropertyNumber<Integer> maxTicks;
+
+	private EnumFacing face;
 
 	public final SidedCapabilityProviderV2 caps = new SidedCapabilityProviderV2();
 
@@ -95,6 +99,12 @@ public class TileAlchemicalCondenser
 	@Override
 	public void tick()
 	{
+		{
+			IBlockState state = world.getBlockState(pos);
+			if(state.getBlock() == BlocksAE.ALCHEMICAL_CONDENSER)
+				face = state.getValue(IBlockHorizontal.FACING);
+		}
+
 		if(world.isRemote)
 		{
 			if(atTickRate(5))
@@ -120,7 +130,7 @@ public class TileAlchemicalCondenser
 			if(autoExtract.get())
 			{
 				if(FEAP == null) FEAP = FluidEnergyAccessPoint.create(world, pos);
-				if(fluid.getFluidAmount() > 0) fluid.drain(FEAP.emitFluid(fluid.getFluid()), true);
+				if(fluid.getFluidAmount() > 0) FEAP.emitFluid(fluid.getFluid());
 			}
 
 			if(!items.getStackInSlot(0).isEmpty())
@@ -214,7 +224,7 @@ public class TileAlchemicalCondenser
 
 	private boolean canCraft(RecipeAlchemicalCondenser recipe)
 	{
-		return recipe.input.test(items.getStackInSlot(0)) && energy.hasEnergy(computeEnergyRate(recipe.energyRate));
+		return recipe.input.test(items.getStackInSlot(0)) && energy.hasEnergy(computeEnergyRate(recipe.energyRate)) && fluid.getCapacity() - fluid.getFluidAmount() >= recipe.outputMb;
 	}
 
 	public int computeEnergyRate(int in)
@@ -270,6 +280,7 @@ public class TileAlchemicalCondenser
 	@Override
 	public void writeNBT(NBTTagCompound nbt)
 	{
+		nbt.setByteArray("Capacity", energy.getCapacity().toByteArray());
 		energy.writeToNBT(nbt);
 		nbt.setTag("Fluids", fluid.writeToNBT(new NBTTagCompound()));
 		nbt.setTag("Items", items.writeToNBT(new NBTTagCompound()));
@@ -281,6 +292,7 @@ public class TileAlchemicalCondenser
 	{
 		if(world == null)
 			fluid.setCapacity(1600000);
+		energy.setFECapacity(new BigInteger(nbt.getByteArray("Capacity")));
 		energy.readFromNBT(nbt);
 		fluid.readFromNBT(nbt.getCompoundTag("Fluids"));
 		items.readFromNBT(nbt.getCompoundTag("Items"));
@@ -470,5 +482,17 @@ public class TileAlchemicalCondenser
 	public FluidStack drain(int maxDrain, boolean doDrain)
 	{
 		return fluid.drain(maxDrain, doDrain);
+	}
+
+	@Override
+	public IFluidHandler alchemicalFluidHandler()
+	{
+		return this;
+	}
+
+	@Override
+	public boolean connectsTo(EnumFacing towards)
+	{
+		return towards != face;
 	}
 }

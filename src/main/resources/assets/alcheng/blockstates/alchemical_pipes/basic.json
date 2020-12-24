@@ -1,0 +1,12 @@
+{
+  "forge_marker": 1,
+  "variants": {
+    "normal": {
+      "model": "block/cube_all",
+      "textures": {
+        "all": "alcheng:alchemical_pipes/basic"
+        ;
+      }
+    }
+  }
+}

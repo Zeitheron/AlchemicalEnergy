@@ -6,6 +6,7 @@ import com.zeitheron.hammercore.internal.blocks.base.IBlockEnableable;
 import com.zeitheron.hammercore.internal.blocks.base.IBlockHorizontal;
 import com.zeitheron.hammercore.tile.TileSyncable;
 import com.zeitheron.hammercore.utils.base.Cast;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,6 +26,8 @@ public class BlockAlchemicalCondenser
 	public BlockAlchemicalCondenser()
 	{
 		super(Material.IRON, TileAlchemicalCondenser.class, "alchemical_condenser");
+		setSoundType(SoundType.METAL);
+		setHarvestLevel("pickaxe", 1);
 		reactsToRedstone = false;
 	}
 
@@ -40,6 +43,7 @@ public class BlockAlchemicalCondenser
 		if(!worldIn.isRemote)
 		{
 			ItemStack stack = playerIn.getHeldItem(hand);
+			if(playerIn.capabilities.isCreativeMode) stack = stack.copy();
 			IFluidHandlerItem fh = FluidUtil.getFluidHandler(stack);
 			if(fh != null)
 			{
