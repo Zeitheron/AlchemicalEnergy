@@ -25,6 +25,9 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import org.zeith.comm3.alcheng.api.machines.IMachineTile;
 import org.zeith.comm3.alcheng.api.machines.upgrades.IMachineUpgrades;
 import org.zeith.comm3.alcheng.api.machines.upgrades.IUpgradeItem;
@@ -38,6 +41,7 @@ import org.zeith.comm3.alcheng.inventory.AlchemicalCondenser;
 import org.zeith.comm3.alcheng.net.PacketPlayMachineSound;
 import org.zeith.comm3.alcheng.recipes.types.RecipeAlchemicalCondenser;
 import org.zeith.comm3.alcheng.utils.DynamicBigEnergyStorage;
+import org.zeith.comm3.alcheng.utils.SidedCapabilityProviderV2;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -46,7 +50,7 @@ import java.util.List;
 
 public class TileAlchemicalCondenser
 		extends TileSyncableTickable
-		implements ISidedInventory, ITileDroppable, IMachineTile
+		implements ISidedInventory, ITileDroppable, IMachineTile, IFluidHandler
 {
 	public final InventoryDummy items = new InventoryDummy(1);
 	public final InventoryDummy upgrades = new InventoryDummy(5);
@@ -61,6 +65,8 @@ public class TileAlchemicalCondenser
 	public final NetPropertyNumber<Integer> fluidBuffer;
 	public final NetPropertyNumber<Long> feBuffer;
 	public final NetPropertyNumber<Integer> maxTicks;
+
+	public final SidedCapabilityProviderV2 caps = new SidedCapabilityProviderV2();
 
 	public TileAlchemicalCondenser()
 	{
@@ -79,6 +85,9 @@ public class TileAlchemicalCondenser
 			UpgradablePart p = IUpgradeItem.fromStack(stack);
 			return p != null && upgrades().hasUpgrade(p) && countUpgrades(p) < p.getMax();
 		};
+
+		caps.putCapability(CapabilityEnergy.ENERGY, energy);
+		caps.putCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, this);
 	}
 
 	FluidEnergyAccessPoint FEAP;
@@ -100,18 +109,18 @@ public class TileAlchemicalCondenser
 		fluid.setCapacity(fluidBuffer.get());
 		energy.setFECapacity(BigInteger.valueOf(feBuffer.get()));
 
+		if(atTickRate(4))
+		{
+			handleUpgrades();
+			sendChangesToNearby();
+		}
+
 		if(!world.isRemote)
 		{
 			if(autoExtract.get())
 			{
 				if(FEAP == null) FEAP = FluidEnergyAccessPoint.create(world, pos);
 				if(fluid.getFluidAmount() > 0) fluid.drain(FEAP.emitFluid(fluid.getFluid()), true);
-			}
-
-			if(atTickRate(4))
-			{
-				handleUpgrades();
-				sendChangesToNearby();
 			}
 
 			if(!items.getStackInSlot(0).isEmpty())
@@ -135,10 +144,12 @@ public class TileAlchemicalCondenser
 			{
 				int maxTicks = recipe.processTicks;
 
-				int up;
-				maxTicks /= Math.pow(1.25F, up = upgrades().getUpgrade(UpgradablePart.SPEED));
-				if(up >= UpgradablePart.SPEED.getMax())
-					maxTicks = 10;
+				int stacks = upgrades().getUpgrade(UpgradablePart.STACK);
+				int speeds = upgrades().getUpgrade(UpgradablePart.SPEED);
+
+				maxTicks *= Math.pow(1.264634, stacks);
+				maxTicks /= Math.pow(1.25F, speeds);
+				if(speeds >= UpgradablePart.SPEED.getMax()) maxTicks = 10;
 
 				int ept = computeEnergyRate(recipe.energyRate);
 
@@ -152,7 +163,7 @@ public class TileAlchemicalCondenser
 
 				if(fulfulledTicks.get() >= maxTicks)
 				{
-					int times = upgrades().getUpgrade(UpgradablePart.STACK) + 1;
+					int times = stacks + 1;
 					for(int i = 0; i < times; ++i)
 					{
 						int canFit = fluid.getCapacity() - fluid.getFluidAmount();
@@ -208,8 +219,12 @@ public class TileAlchemicalCondenser
 
 	public int computeEnergyRate(int in)
 	{
+		int empty = fluid.getCapacity() - fluid.getFluidAmount();
+		if(recipe != null) empty /= recipe.outputMb;
+		int maxCraftTimes = Math.min(items.getStackInSlot(0).getCount(), empty);
+
 		in *= Math.pow(1.5F, upgrades().getUpgrade(UpgradablePart.SPEED));
-		in *= Math.pow(1.092535362, upgrades().getUpgrade(UpgradablePart.STACK));
+		in *= Math.pow(1.092535362, Math.min(upgrades().getUpgrade(UpgradablePart.STACK), maxCraftTimes));
 		in /= Math.pow(1.25F, upgrades().getUpgrade(UpgradablePart.ENERGY));
 		return in;
 	}
@@ -242,14 +257,14 @@ public class TileAlchemicalCondenser
 	@Override
 	public boolean hasCapability(Capability<?> capability, @Nullable EnumFacing facing)
 	{
-		return capability == CapabilityEnergy.ENERGY || super.hasCapability(capability, facing);
+		return caps.hasCapability(capability, facing) || super.hasCapability(capability, facing);
 	}
 
 	@Nullable
 	@Override
 	public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing)
 	{
-		return capability == CapabilityEnergy.ENERGY ? (T) energy : super.getCapability(capability, facing);
+		return caps.getCapabilityOr(capability, facing, super::getCapability);
 	}
 
 	@Override
@@ -429,5 +444,31 @@ public class TileAlchemicalCondenser
 	public IInventory upgradeInventory()
 	{
 		return upgrades;
+	}
+
+	@Override
+	public IFluidTankProperties[] getTankProperties()
+	{
+		return fluid.getTankProperties();
+	}
+
+	@Override
+	public int fill(FluidStack resource, boolean doFill)
+	{
+		return 0;
+	}
+
+	@Nullable
+	@Override
+	public FluidStack drain(FluidStack resource, boolean doDrain)
+	{
+		return fluid.drain(resource, doDrain);
+	}
+
+	@Nullable
+	@Override
+	public FluidStack drain(int maxDrain, boolean doDrain)
+	{
+		return fluid.drain(maxDrain, doDrain);
 	}
 }
