@@ -1,6 +1,13 @@
 package org.zeith.comm3.alcheng.tiles;
 
+import com.zeitheron.hammercore.net.props.NetPropertyNumber;
+import com.zeitheron.hammercore.tile.IVoxelShapeTile;
 import com.zeitheron.hammercore.tile.TileSyncableTickable;
+import com.zeitheron.hammercore.tile.tooltip.own.ITooltip;
+import com.zeitheron.hammercore.tile.tooltip.own.ITooltipProviderHC;
+import com.zeitheron.hammercore.tile.tooltip.own.inf.StringTooltipInfo;
+import com.zeitheron.hammercore.tile.tooltip.own.inf.TranslationTooltipInfo;
+import com.zeitheron.hammercore.utils.math.VoxelShape;
 import com.zeitheron.hammercore.utils.math.vec.Cuboid6;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -17,6 +24,7 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
 import org.zeith.comm3.alcheng.api.machines.IAlchemicalSink;
 import org.zeith.comm3.alcheng.api.machines.IAlchemicalSource;
 import org.zeith.comm3.alcheng.init.FluidsAE;
+import org.zeith.comm3.alcheng.init.InfoAE;
 import org.zeith.comm3.alcheng.utils.SidedCapabilityProviderV2;
 
 import javax.annotation.Nullable;
@@ -25,8 +33,9 @@ import java.util.List;
 
 public class TileAlchemicalPipe
 		extends TileSyncableTickable
-		implements IAlchemicalSink, IFluidHandler
+		implements IAlchemicalSink, IFluidHandler, ITooltipProviderHC, IVoxelShapeTile
 {
+	public final NetPropertyNumber<Short> netSuction;
 	public int suction;
 
 	public final FluidTank fluid;
@@ -41,6 +50,7 @@ public class TileAlchemicalPipe
 
 	public TileAlchemicalPipe(int capacity)
 	{
+		this.netSuction = new NetPropertyNumber<>(this, (short) 0);
 		this.fluid = new FluidTank(capacity);
 		this.connections[0] = new Cuboid6(5 / 16D, 5 / 16D, 5 / 16D, 11 / 16D, 11 / 16D, 11 / 16D);
 		this.caps.putCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, this);
@@ -100,6 +110,7 @@ public class TileAlchemicalPipe
 		if(!world.isRemote)
 		{
 			this.suction = Math.max(0, gatherStrongestSuctionFromSides() - 1);
+			netSuction.set((short) this.suction);
 
 			if(suction > 0)
 			{
@@ -158,6 +169,7 @@ public class TileAlchemicalPipe
 	{
 		super.onSynced();
 		this.cubesDirty = true;
+		this.tooltipDirty = true;
 	}
 
 	public int gatherStrongestSuctionFromSides()
@@ -195,6 +207,7 @@ public class TileAlchemicalPipe
 		this.suction = nbt.getInteger("Suction");
 		this.fluid.setCapacity(nbt.getInteger("Capacity"));
 		this.fluid.readFromNBT(nbt.getCompoundTag("Fluid"));
+		cubesDirty = true;
 	}
 
 	@Override
@@ -225,7 +238,10 @@ public class TileAlchemicalPipe
 	public int fill(FluidStack resource, boolean doFill)
 	{
 		if(resource.getFluid() != FluidsAE.ALCHEMICAL_ENERGY)
+		{
+			world.destroyBlock(pos, true);
 			return 0;
+		}
 		return fluid.fill(resource, doFill);
 	}
 
@@ -254,5 +270,32 @@ public class TileAlchemicalPipe
 	public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing)
 	{
 		return caps.getCapabilityOr(capability, facing, super::getCapability);
+	}
+
+	private boolean tooltipDirty;
+
+	@Override
+	public boolean isTooltipDirty()
+	{
+		return tooltipDirty;
+	}
+
+	@Override
+	public void setTooltipDirty(boolean dirty)
+	{
+		tooltipDirty = dirty;
+	}
+
+	@Override
+	public void addInformation(ITooltip tip)
+	{
+		tip.append(new TranslationTooltipInfo("tooltip." + InfoAE.MOD_ID + ":suction"));
+		tip.append(new StringTooltipInfo(" " + netSuction.get()));
+	}
+
+	@Override
+	public VoxelShape getHighlightedLines()
+	{
+		return VoxelShape.start().addAll(connections);
 	}
 }

@@ -4,6 +4,11 @@ itemGroup.alcheng=Alchemical Energy
 fluid.alcheng:alchemical_energy=Alchemical Energy
 
 tile.alcheng:alchemical_condenser.name=Alchemical Energy Condenser
+tile.alcheng:alchemical_creator.name=Alchemical Energy Creator
+tile.alcheng:alchemical_pipes/basic.name=Basic Alchemical Pipe
+tile.alcheng:alchemical_pipes/advanced.name=Advanced Alchemical Pipe
+tile.alcheng:alchemical_pipes/expert.name=Expert Alchemical Pipe
+tile.alcheng:alchemical_pipes/creative.name=Creative Alchemical Pipe
 
 item.alcheng:upgrades/alchemical_buffer.name=Alchemical Buffer Upgrade
 item.alcheng:upgrades/energy.name=Energy Upgrade
@@ -13,3 +18,5 @@ item.alcheng:upgrades/stack.name=Stack Upgrade
 
 subtitles.alcheng:machines.alchemical_condenser=Condenser Working
 subtitles.alcheng:machines.alchemical_crafter=Crafter Working
+
+tooltip.alcheng:suction=Suction:
