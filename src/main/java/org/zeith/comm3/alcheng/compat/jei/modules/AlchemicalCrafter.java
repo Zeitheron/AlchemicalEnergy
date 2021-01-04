@@ -16,12 +16,11 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.FluidStack;
-import org.lwjgl.opengl.GL11;
 import org.zeith.comm3.alcheng.compat.jei.CompatJEI;
 import org.zeith.comm3.alcheng.init.BlocksAE;
 import org.zeith.comm3.alcheng.init.FluidsAE;
 import org.zeith.comm3.alcheng.init.InfoAE;
-import org.zeith.comm3.alcheng.recipes.types.RecipeAlchemicalCondenser;
+import org.zeith.comm3.alcheng.recipes.types.RecipeAlchemicalCrafter;
 import org.zeith.comm3.alcheng.utils.FluidRenderUtil;
 import org.zeith.comm3.alcheng.utils.TickTimer;
 
@@ -29,20 +28,21 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class AlchemicalCondenser
+public class AlchemicalCrafter
 {
-	static final ResourceLocation TEX = new ResourceLocation(InfoAE.MOD_ID, "textures/gui/alchemical_condenser.png");
-	public static final String UID = InfoAE.MOD_ID + ":alchemical_condenser";
+	static final ResourceLocation TEX = new ResourceLocation(InfoAE.MOD_ID, "textures/gui/alchemical_crafter.png");
+	public static final String UID = InfoAE.MOD_ID + ":alchemical_crafter";
 
 	public static class Wrapper
 			implements IRecipeWrapper
 	{
-		public final RecipeAlchemicalCondenser recipe;
+		public final RecipeAlchemicalCrafter recipe;
 
 		public final TickTimer timer;
 
-		public Wrapper(RecipeAlchemicalCondenser recipe)
+		public Wrapper(RecipeAlchemicalCrafter recipe)
 		{
 			this.recipe = recipe;
 			this.timer = new TickTimer(recipe.processTicks, recipe.processTicks, false);
@@ -51,8 +51,9 @@ public class AlchemicalCondenser
 		@Override
 		public void getIngredients(IIngredients ingredients)
 		{
-			ingredients.setInputs(VanillaTypes.ITEM, Arrays.asList(recipe.input.getMatchingStacks()));
-			ingredients.setOutput(VanillaTypes.FLUID, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, recipe.outputMb));
+			ingredients.setInputLists(VanillaTypes.ITEM, recipe.inputs.stream().map(i -> Arrays.asList(i.getMatchingStacks())).collect(Collectors.toList()));
+			ingredients.setInput(VanillaTypes.FLUID, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, recipe.inputMb));
+			ingredients.setOutput(VanillaTypes.ITEM, recipe.getResult().getBaseOutput());
 		}
 
 		@Override
@@ -60,11 +61,11 @@ public class AlchemicalCondenser
 		{
 			UtilsFX.bindTexture(TEX);
 			float craft = timer.getProgress() * 22F;
-			RenderUtil.drawTexturedModalRect(50 + craft, 20, 176 + craft, 0, 22 - craft, 15);
+			RenderUtil.drawTexturedModalRect(progress.x + craft, progress.y, 176 + craft, 0, 22 - craft, 15);
 		}
 
 		static final Rectangle energy = new Rectangle(1, 1, 8, 52);
-		static final Rectangle progress = new Rectangle(50, 25, 22, 15);
+		static final Rectangle progress = new Rectangle(92, 19, 22, 15);
 
 		@Override
 		public List<String> getTooltipStrings(int mouseX, int mouseY)
@@ -95,7 +96,7 @@ public class AlchemicalCondenser
 		@Override
 		public String getTitle()
 		{
-			return BlocksAE.ALCHEMICAL_CONDENSER.getLocalizedName();
+			return BlocksAE.ALCHEMICAL_CRAFTER.getLocalizedName();
 		}
 
 		@Override
@@ -114,14 +115,37 @@ public class AlchemicalCondenser
 		public void setRecipe(IRecipeLayout recipeLayout, Wrapper recipeWrapper, IIngredients ingredients)
 		{
 			IGuiItemStackGroup items = recipeLayout.getItemStacks();
-			items.init(0, true, CompatJEI.stackRenderer, 22, 20, 16, 16, 0, 0);
-			items.set(0, ingredients.getInputs(VanillaTypes.ITEM).get(0));
 
-			int mb = recipeWrapper.recipe.outputMb;
+			if(recipeWrapper.recipe instanceof RecipeAlchemicalCrafter.Shaped)
+			{
+				RecipeAlchemicalCrafter.Shaped shaped = (RecipeAlchemicalCrafter.Shaped) recipeWrapper.recipe;
+
+				for(int i = 0; i < shaped.recipeWidth; ++i)
+					for(int j = 0; j < shaped.recipeHeight; ++j)
+					{
+						int idx = i + j * shaped.recipeWidth;
+						items.init(idx, true, CompatJEI.stackRenderer, 32 + i * 18, 1 + j * 18, 16, 16, 0, 0);
+						items.set(idx, Arrays.asList(shaped.inputs.get(idx).getMatchingStacks()));
+					}
+			} else if(recipeWrapper.recipe instanceof RecipeAlchemicalCrafter.Shapeless)
+			{
+				RecipeAlchemicalCrafter.Shapeless shapeless = (RecipeAlchemicalCrafter.Shapeless) recipeWrapper.recipe;
+
+				for(int i = 0; i < Math.min(shapeless.inputs.size(), 9); ++i)
+				{
+					items.init(i, true, CompatJEI.stackRenderer, 32 + (i % 3) * 18, 1 + (i / 3) * 18, 16, 16, 0, 0);
+					items.set(i, Arrays.asList(shapeless.inputs.get(i).getMatchingStacks()));
+				}
+			}
+
+			items.init(10, false, 125, 18);
+			items.set(10, recipeWrapper.recipe.getResult().getBaseOutput());
+
+			int mb = recipeWrapper.recipe.inputMb;
 
 			IGuiFluidStackGroup fluids = recipeLayout.getFluidStacks();
-			fluids.init(1, false, 80, 1, 16, 52, mb, false, new FluidOverlay());
-			fluids.set(1, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, mb));
+			fluids.init(11, true, 13, 1, 16, 52, mb, false, new AlchemicalCondenser.FluidOverlay());
+			fluids.set(11, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, mb));
 		}
 	}
 
@@ -131,7 +155,7 @@ public class AlchemicalCondenser
 		@Override
 		public int getWidth()
 		{
-			return 97;
+			return 147;
 		}
 
 		@Override
@@ -144,40 +168,12 @@ public class AlchemicalCondenser
 		public void draw(Minecraft minecraft, int guiLeft, int guiTop)
 		{
 			GlStateManager.disableBlend();
-			FluidRenderUtil.drawFluid(minecraft, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, 100), guiLeft + 50, guiTop + 20, 22, 15);
+			FluidRenderUtil.drawFluid(minecraft, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, 100), guiLeft + 92, guiTop + 20, 22, 15);
 			GlStateManager.enableBlend();
 
 			UtilsFX.bindTexture(TEX);
-			RenderUtil.drawTexturedModalRect(guiLeft, guiTop, 0, 166, 97, 54);
+			RenderUtil.drawTexturedModalRect(guiLeft, guiTop, 0, 166, 147, 54);
 			GuiWidgets.drawEnergy(guiLeft + 1, guiTop + 1, 8, 52, GuiWidgets.EnumPowerAnimation.UP);
-		}
-	}
-
-	public static class FluidOverlay
-			implements IDrawable
-	{
-
-		@Override
-		public int getWidth()
-		{
-			return 16;
-		}
-
-		@Override
-		public int getHeight()
-		{
-			return 54;
-		}
-
-		@Override
-		public void draw(Minecraft minecraft, int x, int y)
-		{
-			int totalLines = Math.round(getHeight() / 5F);
-			int half = totalLines / 2;
-			GL11.glDisable(GL11.GL_TEXTURE_2D);
-			for(int l = 0; l < totalLines; ++l)
-				RenderUtil.drawColoredModalRect(x, y + l * 5, 16F / (l == half ? 1 : 2), 1, 0xFF7F0000);
-			GL11.glEnable(GL11.GL_TEXTURE_2D);
 		}
 	}
 }

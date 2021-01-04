@@ -2,15 +2,13 @@ package org.zeith.comm3.alcheng.init;
 
 import com.zeitheron.hammercore.internal.SimpleRegistration;
 import org.zeith.comm3.alcheng.AlchemicalEnergyMod;
-import org.zeith.comm3.alcheng.blocks.BlockAlchemicalCondenser;
-import org.zeith.comm3.alcheng.blocks.BlockAlchemicalCreator;
-import org.zeith.comm3.alcheng.blocks.BlockAlchemicalEnergy;
-import org.zeith.comm3.alcheng.blocks.BlockAlchemicalPipe;
+import org.zeith.comm3.alcheng.blocks.*;
 
 public class BlocksAE
 {
 	public static final BlockAlchemicalEnergy ALCHEMICAL_ENERGY = new BlockAlchemicalEnergy();
 	public static final BlockAlchemicalCondenser ALCHEMICAL_CONDENSER = new BlockAlchemicalCondenser();
+	public static final BlockAlchemicalCrafter ALCHEMICAL_CRAFTER = new BlockAlchemicalCrafter();
 	public static final BlockAlchemicalCreator ALCHEMICAL_CREATOR = new BlockAlchemicalCreator();
 	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_BASIC = new BlockAlchemicalPipe(25, "basic");
 	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_ADVANCED = new BlockAlchemicalPipe(100, "advanced");

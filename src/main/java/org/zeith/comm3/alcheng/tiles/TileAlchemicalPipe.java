@@ -118,10 +118,10 @@ public class TileAlchemicalPipe
 				{
 					BlockPos pos = this.pos.offset(ef);
 					TileEntity tile = world.getTileEntity(pos);
-					if(tile instanceof IAlchemicalSource)
+					if(tile instanceof IAlchemicalSource && ((IAlchemicalSource) tile).connectsTo(ef.getOpposite()))
 					{
 						IFluidHandler handler = ((IAlchemicalSource) tile).alchemicalFluidHandler();
-						if(FluidUtil.tryFluidTransfer(this, handler, fluid.getCapacity(), false) != null)
+						if(FluidUtil.tryFluidTransfer(this, handler, fluid.getCapacity(), true) != null)
 							sendChangesToNearby();
 					}
 				}

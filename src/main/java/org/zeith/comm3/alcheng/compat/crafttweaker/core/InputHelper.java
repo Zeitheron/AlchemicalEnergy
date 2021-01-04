@@ -11,6 +11,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
+import net.minecraftforge.oredict.OreIngredient;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -25,13 +26,14 @@ public class InputHelper
 
 		Object internal = iIng.getInternal();
 
+		if(internal instanceof String)
+			return new OreIngredient((String) internal);
+
 		if(iIng instanceof IItemStack)
 			return Ingredient.fromStacks(toStack((IItemStack) iIng));
 
 		if(!(internal instanceof Ingredient))
-		{
 			return Ingredient.EMPTY;
-		}
 
 		return (Ingredient) internal;
 	}

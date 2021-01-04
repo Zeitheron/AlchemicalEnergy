@@ -2,17 +2,18 @@ package org.zeith.comm3.alcheng.inventory;
 
 import com.zeitheron.hammercore.client.gui.GuiFluidTank;
 import com.zeitheron.hammercore.client.gui.GuiWTFMojang;
+import com.zeitheron.hammercore.client.gui.GuiWidgets;
+import com.zeitheron.hammercore.client.gui.impl.container.SlotScaled;
 import com.zeitheron.hammercore.client.utils.RenderUtil;
 import com.zeitheron.hammercore.client.utils.UtilsFX;
 import com.zeitheron.hammercore.compat.jei.IJeiHelper;
 import com.zeitheron.hammercore.net.HCNet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -21,21 +22,24 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.zeith.comm3.alcheng.init.FluidsAE;
 import org.zeith.comm3.alcheng.init.InfoAE;
-import org.zeith.comm3.alcheng.tiles.TileAlchemicalCreator;
+import org.zeith.comm3.alcheng.tiles.TileAlchemicalCrafter;
+import org.zeith.comm3.alcheng.utils.FluidRenderUtil;
 
-import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AlchemicalCreator
+public class AlchemicalCrafter
 {
 	@SideOnly(Side.CLIENT)
-	public static GuiContainer createGUI(TileAlchemicalCreator tile, EntityPlayer player)
+	public static GuiContainer createGUI(TileAlchemicalCrafter tile, EntityPlayer player)
 	{
 		return new Gui(tile, player);
 	}
 
-	public static Container createContainer(TileAlchemicalCreator tile, EntityPlayer player)
+	public static Container createContainer(TileAlchemicalCrafter tile, EntityPlayer player)
 	{
 		return new Inventory(tile, player);
 	}
@@ -44,31 +48,28 @@ public class AlchemicalCreator
 	public static class Gui
 			extends GuiWTFMojang<Container>
 	{
-		static final ResourceLocation WIDGETS = new ResourceLocation(InfoAE.MOD_ID, "textures/gui/widgets.png");
-		static final ResourceLocation TEX = new ResourceLocation(InfoAE.MOD_ID, "textures/gui/alchemical_creator.png");
+		static final ResourceLocation TEX = new ResourceLocation(InfoAE.MOD_ID, "textures/gui/alchemical_crafter.png");
 
-		private final TileAlchemicalCreator tile;
+		private final TileAlchemicalCrafter tile;
 		private final EntityPlayer player;
 
 		public GuiFluidTank tank;
-		public final Rectangle autoExtract = new Rectangle();
 		int mouseX, mouseY;
 
-		public Gui(TileAlchemicalCreator tile, EntityPlayer player)
+		public Gui(TileAlchemicalCrafter tile, EntityPlayer player)
 		{
 			super(createContainer(tile, player));
 			this.tile = tile;
 			this.player = player;
 			this.xSize = 176;
-			this.ySize = 128;
+			this.ySize = 166;
 		}
 
 		@Override
 		public void initGui()
 		{
 			super.initGui();
-			this.tank = new GuiFluidTank(guiLeft + 8, guiTop + 16, 139, 16, tile.fluid);
-			this.autoExtract.setBounds(guiLeft + 149, guiTop + 14, 20, 20);
+			this.tank = new GuiFluidTank(guiLeft + 20, guiTop + 17, 16, 52, tile.fluid);
 		}
 
 		@Override
@@ -77,25 +78,22 @@ public class AlchemicalCreator
 			this.mouseX = mouseX;
 			this.mouseY = mouseY;
 
+			GlStateManager.disableBlend();
+			FluidRenderUtil.drawFluid(mc, new FluidStack(FluidsAE.ALCHEMICAL_ENERGY, 100), guiLeft + 99, guiTop + 35, 22, 15);
+			GlStateManager.enableBlend();
+
 			UtilsFX.bindTexture(TEX);
 			RenderUtil.drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
+			{
+				float craft = tile.getProgress(partialTicks) * 22F;
+				RenderUtil.drawTexturedModalRect(guiLeft + 99 + craft, guiTop + 35, 176 + craft, 0, 22 - craft, 15);
+			}
 
-			UtilsFX.bindTexture(WIDGETS);
-			RenderUtil.drawTexturedModalRect(autoExtract.x, autoExtract.y, 0, autoExtract.contains(mouseX, mouseY) ? 20 : 0, autoExtract.width, autoExtract.height);
-			RenderUtil.drawTexturedModalRect(autoExtract.x + 2, autoExtract.y + 2, 22, 2 + (tile.autoExtract.get() ? 0 : 20), autoExtract.width - 4, autoExtract.height - 4);
+			float h = (float) Math.min(tile.energy.getFilledProgress() * 52, 52F);
 
-			GlStateManager.pushMatrix();
-			GlStateManager.translate(tank.x + tank.width, tank.y, 0);
-			GlStateManager.rotate(90, 0, 0, 1);
-			tank.x = tank.y = 0;
-			tank.width = 16;
-			tank.height = 139;
+			GuiWidgets.drawEnergy(guiLeft + 8, guiTop + 17 + 52 - h, 8, h, GuiWidgets.EnumPowerAnimation.UP);
+
 			tank.render(mouseX, mouseY);
-			tank.x = guiLeft + 8;
-			tank.y = guiTop + 16;
-			tank.width = 139;
-			tank.height = 16;
-			GlStateManager.popMatrix();
 		}
 
 		@Override
@@ -110,21 +108,45 @@ public class AlchemicalCreator
 			if(tank.postRender(mouseX, mouseY))
 				drawHoveringText(tank.getTooltip(mouseX, mouseY), mouseX, mouseY);
 
-			if(autoExtract.contains(mouseX, mouseY) && HCNet.getMouseStack(Minecraft.getMinecraft().player).isEmpty())
-				drawHoveringText("Auto-extract: " + (tile.autoExtract.get() ? "ON" : "OFF"), mouseX, mouseY);
+			if(mouseX >= guiLeft + 8 && mouseY >= guiTop + 17 && mouseX < guiLeft + 8 + 8 && mouseY < guiTop + 17 + 52 && HCNet.getMouseStack(Minecraft.getMinecraft().player).isEmpty())
+			{
+				int j1 = guiLeft + 8, k1 = guiTop + 17;
+				this.drawGradientRect(j1, k1, j1 + 8, k1 + 52, -2130706433, -2130706433);
+
+				List<String> text = new ArrayList<>(2);
+				text.add(String.format("FE: %,d / %,d", tile.energy.getEnergy(), tile.energy.getCapacity()));
+				if(tile.recipe != null)
+					text.add(String.format("FE/tick: %,d", tile.computeEnergyRate(tile.recipe.energyRate)));
+				drawHoveringText(text, mouseX, mouseY);
+			}
 
 			GlStateManager.popMatrix();
-		}
 
-		@Override
-		protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException
-		{
-			super.mouseClicked(mouseX, mouseY, mouseButton);
+			InventoryPlayer inventoryplayer = this.mc.player.inventory;
+			ItemStack mouse = this.draggedStack.isEmpty() ? inventoryplayer.getItemStack() : this.draggedStack;
 
-			if(autoExtract.contains(mouseX, mouseY))
+			if(!mouse.isEmpty())
 			{
-				mc.playerController.sendEnchantPacket(inventorySlots.windowId, 1);
-				mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1F));
+				int color = tile.upgrades.isItemValidForSlot(0, mouse) ? 0x8044ff44 : 0x80ff4444;
+
+				List<Slot> sls = inventorySlots.inventorySlots;
+				for(int i = 1; i < 6; ++i)
+				{
+					Slot slot = sls.get(i);
+
+					GlStateManager.disableLighting();
+					GlStateManager.disableDepth();
+					int j1 = slot.xPos;
+					int k1 = slot.yPos;
+					GlStateManager.colorMask(true, true, true, false);
+					if(slot instanceof SlotScaled)
+						this.drawGradientRect(j1, k1, j1 + ((SlotScaled) slot).getWidth(), k1 + ((SlotScaled) slot).getHeight(), color, color);
+					else
+						this.drawGradientRect(j1, k1, j1 + 16, k1 + 16, color, color);
+					GlStateManager.colorMask(true, true, true, true);
+					GlStateManager.enableLighting();
+					GlStateManager.enableDepth();
+				}
 			}
 		}
 
@@ -160,30 +182,25 @@ public class AlchemicalCreator
 	public static class Inventory
 			extends Container
 	{
-		private final TileAlchemicalCreator tile;
+		private final TileAlchemicalCrafter tile;
 
-		public Inventory(TileAlchemicalCreator tile, EntityPlayer player)
+		public Inventory(TileAlchemicalCrafter tile, EntityPlayer player)
 		{
 			this.tile = tile;
-			addInventorySlots(player, 8, 46);
-		}
 
-		@Override
-		public boolean enchantItem(EntityPlayer playerIn, int id)
-		{
-			if(id == 1)
-			{
-				tile.autoExtract.set(!tile.autoExtract.get());
-				return true;
-			}
-
-			return false;
+			addSlotToContainer(new SlotScaled(tile.itemOutput, 0, 129, 31, 24, 24));
+			for(int i = 0; i < 5; ++i)
+				addSlotToContainer(new SlotScaled(tile.upgrades, i, 156, 11 + 14 * i, 12, 12));
+			for(int x = 0; x < 3; ++x)
+				for(int y = 0; y < 3; ++y)
+					addSlotToContainer(new Slot(tile.items, x + 3 * y, 39 + x * 18, 17 + y * 18));
+			addInventorySlots(player, 8, 84);
 		}
 
 		@Override
 		public boolean canInteractWith(EntityPlayer playerIn)
 		{
-			return playerIn.getDistanceSq(tile.getPos()) < 64.0D;
+			return tile.items.isUsableByPlayer(playerIn, tile.getPos());
 		}
 
 		protected void addInventorySlots(EntityPlayer player, int x, int y)

@@ -1,0 +1,35 @@
+{
+  "forge_marker": 1,
+  "variants": {
+    "enabled=false,facing=north": {
+      "model": "alcheng:alchemical_crafter/off"
+    },
+    "enabled=false,facing=south": {
+      "model": "alcheng:alchemical_crafter/off",
+      "y": 180
+    },
+    "enabled=false,facing=west": {
+      "model": "alcheng:alchemical_crafter/off",
+      "y": 270
+    },
+    "enabled=false,facing=east": {
+      "model": "alcheng:alchemical_crafter/off",
+      "y": 90
+    },
+    "enabled=true,facing=north": {
+      "model": "alcheng:alchemical_crafter/on"
+    },
+    "enabled=true,facing=south": {
+      "model": "alcheng:alchemical_crafter/on",
+      "y": 180
+    },
+    "enabled=true,facing=west": {
+      "model": "alcheng:alchemical_crafter/on",
+      "y": 270
+    },
+    "enabled=true,facing=east": {
+      "model": "alcheng:alchemical_crafter/on",
+      "y": 90
+    }
+  }
+}

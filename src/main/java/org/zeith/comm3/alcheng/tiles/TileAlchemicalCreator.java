@@ -15,6 +15,7 @@ import net.minecraftforge.fluids.FluidTank;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import org.zeith.comm3.alcheng.api.machines.IAlchemicalSource;
 import org.zeith.comm3.alcheng.init.FluidsAE;
 import org.zeith.comm3.alcheng.inventory.AlchemicalCreator;
 import org.zeith.comm3.alcheng.utils.SidedCapabilityProviderV2;
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
 
 public class TileAlchemicalCreator
 		extends TileSyncableTickable
-		implements IFluidHandler
+		implements IFluidHandler, IAlchemicalSource
 {
 	public final FluidTank fluid = new FluidTank(8000);
 
@@ -125,5 +126,17 @@ public class TileAlchemicalCreator
 	public FluidStack drain(int maxDrain, boolean doDrain)
 	{
 		return fluid.drain(maxDrain, doDrain);
+	}
+
+	@Override
+	public IFluidHandler alchemicalFluidHandler()
+	{
+		return this;
+	}
+
+	@Override
+	public boolean connectsTo(EnumFacing towards)
+	{
+		return true;
 	}
 }

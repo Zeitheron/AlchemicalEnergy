@@ -4,6 +4,7 @@ itemGroup.alcheng=Alchemical Energy
 fluid.alcheng:alchemical_energy=Alchemical Energy
 
 tile.alcheng:alchemical_condenser.name=Alchemical Energy Condenser
+tile.alcheng:alchemical_crafter.name=Alchemy Crafting Station
 tile.alcheng:alchemical_creator.name=Alchemical Energy Creator
 tile.alcheng:alchemical_pipes/basic.name=Basic Alchemical Pipe
 tile.alcheng:alchemical_pipes/advanced.name=Advanced Alchemical Pipe

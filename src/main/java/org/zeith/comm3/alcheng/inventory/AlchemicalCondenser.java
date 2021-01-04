@@ -74,8 +74,8 @@ public class AlchemicalCondenser
 		public void initGui()
 		{
 			super.initGui();
-			this.tank = new GuiFluidTank(guiLeft + 120, guiTop + 11, 16, 64, tile.fluid);
-			this.autoExtract.setBounds(guiLeft + 12, guiTop + 10, 20, 20);
+			this.tank = new GuiFluidTank(guiLeft + 120, guiTop + 16, 16, 52, tile.fluid);
+			this.autoExtract.setBounds(guiLeft + 12, guiTop + 15, 20, 20);
 		}
 
 		@Override
@@ -95,10 +95,9 @@ public class AlchemicalCondenser
 				RenderUtil.drawTexturedModalRect(guiLeft + 90 + craft, guiTop + 35, 176 + craft, 0, 22 - craft, 15);
 			}
 
-			float h = (float) Math.min(tile.energy.getFilledProgress() * 64, 64F);
+			float h = (float) Math.min(tile.energy.getFilledProgress() * 52, 52F);
 
-//			GuiWidgets.drawFurnaceArrow(guiLeft + 90, guiTop + 35, tile.getProgress(partialTicks));
-			GuiWidgets.drawEnergy(guiLeft + 41, guiTop + 11 + 64 - h, 8, h, GuiWidgets.EnumPowerAnimation.UP);
+			GuiWidgets.drawEnergy(guiLeft + 41, guiTop + 16 + 64 - h, 8, h, GuiWidgets.EnumPowerAnimation.UP);
 
 			UtilsFX.bindTexture(WIDGETS);
 			RenderUtil.drawTexturedModalRect(autoExtract.x, autoExtract.y, 0, autoExtract.contains(mouseX, mouseY) ? 20 : 0, autoExtract.width, autoExtract.height);
@@ -110,16 +109,19 @@ public class AlchemicalCondenser
 		@Override
 		protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY)
 		{
+			this.fontRenderer.drawString(tile.getBlockType().getLocalizedName(), 8, 5, 4210752);
+			this.fontRenderer.drawString(player.inventory.getDisplayName().getUnformattedText(), 8, this.ySize - 96 + 4, 4210752);
+
 			GlStateManager.pushMatrix();
 			GlStateManager.translate(-guiLeft, -guiTop, 200);
 
 			if(tank.postRender(mouseX, mouseY))
 				drawHoveringText(tank.getTooltip(mouseX, mouseY), mouseX, mouseY);
 
-			if(mouseX >= guiLeft + 41 && mouseY >= guiTop + 11 && mouseX < guiLeft + 41 + 8 && mouseY < guiTop + 11 + 64 && HCNet.getMouseStack(Minecraft.getMinecraft().player).isEmpty())
+			if(mouseX >= guiLeft + 41 && mouseY >= guiTop + 16 && mouseX < guiLeft + 41 + 8 && mouseY < guiTop + 16 + 52 && HCNet.getMouseStack(Minecraft.getMinecraft().player).isEmpty())
 			{
-				int j1 = guiLeft + 41, k1 = guiTop + 11;
-				this.drawGradientRect(j1, k1, j1 + 8, k1 + 64, -2130706433, -2130706433);
+				int j1 = guiLeft + 41, k1 = guiTop + 16;
+				this.drawGradientRect(j1, k1, j1 + 8, k1 + 52, -2130706433, -2130706433);
 
 				List<String> text = new ArrayList<>(2);
 				text.add(String.format("FE: %,d / %,d", tile.energy.getEnergy(), tile.energy.getCapacity()));

@@ -1,0 +1,10 @@
+{
+  "parent": "alcheng:block/machine",
+  "textures": {
+    "top": "alcheng:blocks/alchemical_crafter/on/top",
+    "front": "alcheng:blocks/alchemical_crafter/on/front",
+    "side": "alcheng:blocks/alchemical_crafter/on/side",
+    "back": "alcheng:blocks/alchemical_crafter/on/back",
+    "bottom": "alcheng:blocks/alchemical_crafter/on/bottom"
+  }
+}
