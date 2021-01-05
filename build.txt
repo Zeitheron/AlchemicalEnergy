@@ -1,7 +1,7 @@
 #Project info
 author=Zeitheron
-start_git_commit=?
-git_commit=https://gitlab.com/Zeitheron/???/commit/{{hash}}
+start_git_commit=f7f3c608598289042f61d650dc0799fb6df307f1
+git_commit=https://github.com/Zeitheron/AlchemicalEnergy/commit/{{hash}}
 
 #Runtime info
 forge_version=14.23.5.2847
@@ -14,6 +14,6 @@ jei_version=4.16.1.301
 mod_id=alcheng
 mod_id_fancy=AlchemicalEnergy
 mod_name=Alchemical Energy
-mod_version=12.0.1-pre4
-cf_project=0
+mod_version=12.0.1
+cf_project=427755
 release_type=release
