@@ -2,7 +2,7 @@
   {
     "modid": "alcheng",
     "name": "Alchemical Energy",
-    "description": "",
+    "description": "This project was commissioned by @SoftDiamond on Telegram, and developed by Zeitheron.",
     "version": "${version}",
     "mcversion": "${mcversion}",
     "authorList": [

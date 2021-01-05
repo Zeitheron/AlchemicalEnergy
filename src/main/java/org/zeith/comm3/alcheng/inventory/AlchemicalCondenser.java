@@ -97,7 +97,7 @@ public class AlchemicalCondenser
 
 			float h = (float) Math.min(tile.energy.getFilledProgress() * 52, 52F);
 
-			GuiWidgets.drawEnergy(guiLeft + 41, guiTop + 16 + 64 - h, 8, h, GuiWidgets.EnumPowerAnimation.UP);
+			GuiWidgets.drawEnergy(guiLeft + 41, guiTop + 16 + 52 - h, 8, h, GuiWidgets.EnumPowerAnimation.UP);
 
 			UtilsFX.bindTexture(WIDGETS);
 			RenderUtil.drawTexturedModalRect(autoExtract.x, autoExtract.y, 0, autoExtract.contains(mouseX, mouseY) ? 20 : 0, autoExtract.width, autoExtract.height);
