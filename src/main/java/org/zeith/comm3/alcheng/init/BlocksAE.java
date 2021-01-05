@@ -12,7 +12,7 @@ public class BlocksAE
 	public static final BlockAlchemicalCreator ALCHEMICAL_CREATOR = new BlockAlchemicalCreator();
 	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_BASIC = new BlockAlchemicalPipe(25, "basic");
 	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_ADVANCED = new BlockAlchemicalPipe(100, "advanced");
-	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_EXPERT = new BlockAlchemicalPipe(100, "expert");
+	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_EXPERT = new BlockAlchemicalPipe(400, "expert");
 	public static final BlockAlchemicalPipe ALCHEMICAL_PIPES_CREATIVE = new BlockAlchemicalPipe(Integer.MAX_VALUE, "creative");
 
 	public static void register()
