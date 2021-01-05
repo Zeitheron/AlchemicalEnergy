@@ -23,10 +23,16 @@ public class CompatJEI
 	{
 		try
 		{
-			stackRenderer = (IIngredientRenderer) Class.forName("mezz.jei.plugins.vanilla.ingredients.ItemStackRenderer").newInstance();
+			stackRenderer = (IIngredientRenderer) Class.forName("mezz.jei.plugins.vanilla.ingredients.item.ItemStackRenderer").newInstance();
 		} catch(InstantiationException | IllegalAccessException | ClassNotFoundException e)
 		{
-			e.printStackTrace();
+			try
+			{
+				stackRenderer = (IIngredientRenderer) Class.forName("mezz.jei.plugins.vanilla.ingredients.ItemStackRenderer").newInstance();
+			} catch(InstantiationException | IllegalAccessException | ClassNotFoundException e2)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 
