@@ -14,8 +14,9 @@ public class SoundsAE
 
 	private static SoundEvent $(String name)
 	{
-		SoundEvent se = new SoundEvent(new ResourceLocation(InfoAE.MOD_ID, name));
-		se.setRegistryName(se.getSoundName());
+		ResourceLocation id = new ResourceLocation(InfoAE.MOD_ID, name);
+		SoundEvent se = new SoundEvent(id);
+		se.setRegistryName(id);
 		i.events.add(se);
 		return se;
 	}
